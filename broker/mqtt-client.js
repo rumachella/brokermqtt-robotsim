@@ -8,7 +8,7 @@ const MQTT_PORT = process.env.MQTT_PORT || 8883;
 const MQTT_USER = process.env.MQTT_USER;
 const MQTT_PASS = process.env.MQTT_PASS;
 
-const clientId = `bridge-${Math.random().toString(16).slice(2,8)}`;
+const clientId = `bridge-${Math.random().toString(16).slice(2, 8)}`;
 const connectUrl = `mqtts://${MQTT_HOST}:${MQTT_PORT}`;
 
 const opts = {
@@ -24,24 +24,24 @@ const opts = {
 const client = mqtt.connect(connectUrl, opts);
 
 client.on("connect", () => {
-  console.log("Conectado a HiveMQ Cloud:", connectUrl);
-  client.subscribe("robot/estado", { qos: 1 });
-  client.subscribe("robot/ack", { qos: 1 });
+  console.log("✅ Conectado a HiveMQ Cloud:", connectUrl);
+  client.subscribe("/tenant/1/robot/estado", { qos: 1 });
+  client.subscribe("/tenant/1/robot/ack", { qos: 1 });
 });
 
-client.on("error", err => console.error("MQTT error:", err));
-client.on("reconnect", () => console.log("Reconectando..."));
+client.on("error", (err) => console.error("❌ MQTT error:", err));
+client.on("reconnect", () => console.log("♻️  Reconectando..."));
 
 client.on("message", (topic, payloadBuffer) => {
   const payload = payloadBuffer.toString();
-  console.log(`<< Mensaje recibido [${topic}]:`, payload);
+  console.log(`📩 [${topic}]`, payload);
 });
 
-// Función para publicar comandos
+// 👉 Función para publicar comandos
 export const publicarComando = (payload) => {
-  client.publish("robot/comandos", JSON.stringify(payload), { qos: 1 }, (err) => {
-    if (err) console.error("Error publicando comando:", err);
-    else console.log(">> Comando enviado:", payload);
+  client.publish("/tenant/1/robot/comandos", JSON.stringify(payload), { qos: 1 }, (err) => {
+    if (err) console.error("❌ Error publicando comando:", err);
+    else console.log("📤 Comando enviado:", payload);
   });
 };
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Control Robot</title>
   <style>
     button { width: 120px; height: 50px; margin: 5px; font-size: 16px; }
@@ -14,16 +14,19 @@
     <button onclick="enviar('atras')">Atrás</button>
     <button onclick="enviar('izquierda')">Izquierda</button>
     <button onclick="enviar('derecha')">Derecha</button>
+    <button onclick="enviar('stop')">Stop</button>
   </div>
   <div>
-    <button onclick="enviarMontacargas('subir')">Levantar</button>
+    <button onclick="enviarMontacargas('subir')">Subir</button>
     <button onclick="enviarMontacargas('bajar')">Bajar</button>
+    <button onclick="enviarMontacargas('inclinar')">Inclinar</button>
+    <button onclick="enviarMontacargas('declinar')">Declinar</button>
   </div>
+
   <pre id="logs"></pre>
 
   <script>
-    const logs = document.getElementById('logs');
-
+    const logs = document.getElementById("logs");
     function log(msg) {
       logs.textContent += msg + "\n";
       logs.scrollTop = logs.scrollHeight;
@@ -33,20 +36,18 @@
       const res = await fetch("/comando", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ accion: "mover", direccion })
+        body: JSON.stringify({ accion: "mover", direccion, state: "down" })
       });
-      const data = await res.json();
-      log("Enviado: " + JSON.stringify(data));
+      log("Enviado mover: " + JSON.stringify(await res.json()));
     }
 
     async function enviarMontacargas(modo) {
       const res = await fetch("/comando", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ accion: "montacargas", modo })
+        body: JSON.stringify({ accion: "montacargas", modo, state: "up" })
       });
-      const data = await res.json();
-      log("Enviado: " + JSON.stringify(data));
+      log("Enviado montacargas: " + JSON.stringify(await res.json()));
     }
   </script>
 </body>
