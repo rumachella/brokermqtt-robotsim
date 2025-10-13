@@ -6,20 +6,14 @@ import { v4 as uuidv4 } from "uuid";
 dotenv.config();
 const app = express();
 app.use(express.json());
-app.use(express.static("public")); // sirve el front (se descartara cuando lo subamos a render)
+app.use(express.static("public"));
 
 app.post("/comando", (req, res) => {
-  const { accion, direccion, modo, state = "down" } = req.body; 
+  const { type, action, state = "down" } = req.body;
 
-  let payload;
+  if (!type || !action) return res.status(400).send({ error: "Campos type/action requeridos" });
 
-  if (accion === "mover") {
-    payload = { accion, direccion, state, nonce: uuidv4() };
-  } else if (accion === "montacargas") {
-    payload = { accion, modo, state, nonce: uuidv4() };
-  } else {
-    return res.status(400).send({ error: "Acción no soportada" });
-  }
+  const payload = { type, action, state, nonce: uuidv4() };
 
   publicarComando(payload);
   res.send({ status: "enviado", payload });

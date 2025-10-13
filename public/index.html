@@ -10,45 +10,41 @@
 <body>
   <h2>Control Robot</h2>
   <div>
-    <button onclick="enviar('adelante')">Adelante</button>
-    <button onclick="enviar('atras')">Atrás</button>
-    <button onclick="enviar('izquierda')">Izquierda</button>
-    <button onclick="enviar('derecha')">Derecha</button>
-    <button onclick="enviar('stop')">Stop</button>
-  </div>
-  <div>
-    <button onclick="enviarMontacargas('subir')">Subir</button>
-    <button onclick="enviarMontacargas('bajar')">Bajar</button>
-    <button onclick="enviarMontacargas('inclinar')">Inclinar</button>
-    <button onclick="enviarMontacargas('declinar')">Declinar</button>
-  </div>
+  <button onclick="enviar('move','forward')">Adelante</button>
+  <button onclick="enviar('move','backward')">Atrás</button>
+  <button onclick="enviar('turn','left')">Izquierda</button>
+  <button onclick="enviar('turn','right')">Derecha</button>
+  <button onclick="enviar('turn','degrees')">Giro 180</button>
+  <button onclick="enviar('stop')">Stop</button>
+</div>
+<div>
+  <button onclick="enviar('lift','up')">Subir</button>
+  <button onclick="enviar('lift','down')">Bajar</button>
+  <!-- <button onclick="enviar('lift','tilt_up')">Inclinar</button>
+  <button onclick="enviar('lift','tilt_down')">Declinar</button> -->
+</div>
 
   <pre id="logs"></pre>
 
-  <script>
-    const logs = document.getElementById("logs");
-    function log(msg) {
-      logs.textContent += msg + "\n";
-      logs.scrollTop = logs.scrollHeight;
-    }
+ <script>
+  const logs = document.getElementById("logs");
+  function log(msg) {
+    logs.textContent += msg + "\n";
+    logs.scrollTop = logs.scrollHeight;
+  }
 
-    async function enviar(direccion) {
-      const res = await fetch("/comando", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ accion: "mover", direccion, state: "down" })
-      });
-      log("Enviado mover: " + JSON.stringify(await res.json()));
-    }
-
-    async function enviarMontacargas(modo) {
-      const res = await fetch("/comando", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ accion: "montacargas", modo, state: "up" })
-      });
-      log("Enviado montacargas: " + JSON.stringify(await res.json()));
-    }
-  </script>
+  async function enviar(tipo, accion) {
+    const res = await fetch("/comando", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        type: tipo,
+        action: accion,
+        state: "down" // o "up" según corresponda
+      })
+    });
+    log(`Enviado ${tipo}: ${accion} => ${JSON.stringify(await res.json())}`);
+  }
+</script>
 </body>
 </html>
