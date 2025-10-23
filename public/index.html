@@ -4,47 +4,69 @@
   <meta charset="UTF-8" />
   <title>Control Robot</title>
   <style>
-    button { width: 120px; height: 50px; margin: 5px; font-size: 16px; }
+    button {
+      width: 120px;
+      height: 50px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <h2>Control Robot</h2>
+
   <div>
-  <button onclick="enviar('move','forward')">Adelante</button>
-  <button onclick="enviar('move','backward')">Atrás</button>
-  <button onclick="enviar('turn','left')">Izquierda</button>
-  <button onclick="enviar('turn','right')">Derecha</button>
-  <button onclick="enviar('turn','degrees')">Giro 180</button>
-  <button onclick="enviar('stop' , 'stop')">Stop</button>
-</div>
-<div>
-  <button onclick="enviar('lift','up')">Subir</button>
-  <button onclick="enviar('lift','down')">Bajar</button>
-  <button onclick="enviar('tilt','up')">Inclinar</button>
-  <button onclick="enviar('tilt','down')">Declinar</button>
-</div>
+    <button onmousedown="accion('move','forward')">Adelante</button>
+    <button onmousedown="accion('move','backward')">Atrás</button>
+    <button onmousedown="accion('turn','left')">Izquierda</button>
+    <button onmousedown="accion('turn','right')">Derecha</button>
+    <button onmousedown="accion('turn','degrees')">Giro 180</button>
+    <button onmousedown="accion('stop','stop')">Stop</button>
+  </div>
+
+  <div>
+    <button onmousedown="accion('lift','up')">Subir</button>
+    <button onmousedown="accion('lift','down')">Bajar</button>
+    <button onmousedown="accion('tilt','up')">Inclinar</button>
+    <button onmousedown="accion('tilt','down')">Declinar</button>
+  </div>
 
   <pre id="logs"></pre>
 
- <script>
-  const logs = document.getElementById("logs");
-  function log(msg) {
-    logs.textContent += msg + "\n";
-    logs.scrollTop = logs.scrollHeight;
-  }
+  <script>
+    const logs = document.getElementById("logs");
 
-  async function enviar(tipo, accion) {
-    const res = await fetch("/comando", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        type: tipo,
-        action: accion,
-        state: "down" // o "up" según corresponda
-      })
+    function log(msg) {
+      const t = new Date().toLocaleTimeString();
+      logs.textContent += `[${t}] ${msg}\n`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    async function enviar(tipo, accion) {
+      try {
+        const res = await fetch("/comando", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: tipo, action: accion })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        log(`✅ Enviado ${tipo}: ${accion} → ${JSON.stringify(data)}`);
+      } catch (err) {
+        log(`❌ Error enviando ${tipo}:${accion} → ${err.message}`);
+      }
+    }
+
+    function accion(tipo, valor) {
+      enviar(tipo, valor);
+    }
+
+    // Envía "stop" una sola vez al soltar el mouse, en cualquier parte
+    document.addEventListener("mouseup", () => {
+      enviar("stop", "stop");
     });
-    log(`Enviado ${tipo}: ${accion} => ${JSON.stringify(await res.json())}`);
-  }
-</script>
+  </script>
 </body>
 </html>
