@@ -4,12 +4,26 @@
   <meta charset="UTF-8" />
   <title>Control Robot</title>
   <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
     button {
-      width: 120px;
+      width: 140px;
       height: 50px;
       margin: 5px;
       font-size: 16px;
       cursor: pointer;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 10px;
+      height: 200px;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -17,25 +31,33 @@
   <h2>Control Robot</h2>
 
   <div>
-    <button onmousedown="accion('move','forward')">Adelante</button>
-    <button onmousedown="accion('move','backward')">Atrás</button>
-    <button onmousedown="accion('turn','left')">Izquierda</button>
-    <button onmousedown="accion('turn','right')">Derecha</button>
-    <button onmousedown="accion('turn','degrees')">Giro 180</button>
-    <button onmousedown="accion('stop','stop')">Stop</button>
+    <button onmousedown="accion('move', { direction: 'forward' })">Adelante</button>
+    <button onmousedown="accion('move', { direction: 'backward' })">Atrás</button>
+    <button onmousedown="accion('turn', { direction: 'left' })">Izquierda</button>
+    <button onmousedown="accion('turn', { direction: 'right' })">Derecha</button>
+    <!-- <button onmousedown="accion('turn', { direction: 'degrees', time: 2000 })">Giro 180°</button> -->
+    <button onmousedown="accion('stop')">Stop</button>
   </div>
 
   <div>
-    <button onmousedown="accion('lift','up')">Subir</button>
-    <button onmousedown="accion('lift','down')">Bajar</button>
-    <button onmousedown="accion('tilt','up')">Inclinar</button>
-    <button onmousedown="accion('tilt','down')">Declinar</button>
+    <button onmousedown="accion('lift', { direction: 'up' })">Subir</button>
+    <button onmousedown="accion('lift', { direction: 'down' })">Bajar</button>
+    <button onmousedown="accion('tilt', { direction: 'up' })">Inclinar</button>
+    <button onmousedown="accion('tilt', { direction: 'down' })">Declinar</button>
+  </div>
+
+  <div>
+    <button onclick="accion('take_photo')">📸 Tomar Foto</button>
+    <button onclick="accion('mode', { mode: 'manual' })">Modo Manual</button>
+    <button onclick="accion('mode', { mode: 'auto' })">Modo Automático</button>
   </div>
 
   <pre id="logs"></pre>
 
   <script>
     const logs = document.getElementById("logs");
+    const robotId = "robot-1"; // <-- cámbialo según tu robot real
+    let controlActivo = false; // 🔹 indica si un botón de control está presionado
 
     function log(msg) {
       const t = new Date().toLocaleTimeString();
@@ -43,30 +65,52 @@
       logs.scrollTop = logs.scrollHeight;
     }
 
-    async function enviar(tipo, accion) {
+    async function enviar(commandType, content = {}) {
+      const body = {
+        nonce: crypto.randomUUID(),
+        robotId,
+        commandType,
+        timestamp: new Date().toISOString(),
+        status: "ok",
+        content,
+      };
+
       try {
-        const res = await fetch("/comando", {
+        const res = await fetch("/webhook", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: tipo, action: accion })
+          body: JSON.stringify(body),
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        log(`✅ Enviado ${tipo}: ${accion} → ${JSON.stringify(data)}`);
+        log(`✅ Enviado ${commandType} → ${JSON.stringify(data.payload)}`);
       } catch (err) {
-        log(`❌ Error enviando ${tipo}:${accion} → ${err.message}`);
+        log(`❌ Error enviando ${commandType} → ${err.message}`);
       }
     }
 
-    function accion(tipo, valor) {
-      enviar(tipo, valor);
+    function accion(commandType, content = {}) {
+      enviar(commandType, content);
+      // Si es un comando de movimiento o dirección, activamos el control
+      if (["move", "turn", "lift", "tilt"].includes(commandType)) {
+        controlActivo = true;
+      }
     }
 
-    // Envía "stop" una sola vez al soltar el mouse, en cualquier parte
+    // Envía "stop" al soltar el mouse solo si antes se presionó un botón de control
     document.addEventListener("mouseup", () => {
-      enviar("stop", "stop");
+      if (controlActivo) {
+        enviar("stop");
+        controlActivo = false;
+      }
     });
+    const evtSource = new EventSource("/events");
+
+evtSource.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.tipo === "recibido") log(`📥 ${data.mensaje}`);
+};
   </script>
 </body>
 </html>
