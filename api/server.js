@@ -75,10 +75,10 @@ app.post('/webhook', (req, res) => {
 
   const payload = {
     nonce: nonce || crypto.randomUUID(),
-    robotId,
+    robotId: 1000,
     commandType,
     timestamp: timestamp || new Date().toISOString(),
-    status,
+    status: 'ok',
     content: content || {}
   };
 

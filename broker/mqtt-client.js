@@ -39,6 +39,7 @@ client.on("connect", () => {
     "/tenant/1/robot/status",
     "/tenant/1/robot/image",
     "/tenant/1/robot/obstacle",
+    "/tenant/1/robot/error",
   ];
 
   client.subscribe(topics, { qos: 1 }, (err) => {
@@ -76,39 +77,36 @@ client.on("message", async (topic, payloadBuffer) => {
   try {
     await sendToDebug(data);
     console.log(`📤 Enviado a debug (${messageType})`);
-  } catch (err) {
+  } catch (err) 
+  {
     console.error("❌ Error enviando a debug:", err.message);
   }
 });
 
 // ================== FUNCIÓN PARA PUBLICAR ==================
 export const publicarComando = (payload) => {
-  const type = payload.commandType;
-  let action = payload.content?.direction || payload.content?.mode || type || "stop";
+  try {
+    const jsonString = JSON.stringify(payload);
 
-  const legacyPayload = {
-    type: type || "move",
-    action,
-    state: "down",
-    nonce: payload.nonce || uuidv4(),
-  };
+    client.publish(
+      "/tenant/1/robot/comandos",
+      jsonString,
+      { qos: 1 },
+      (err) => {
+        if (err) {
+          console.error("❌ Error publicando comando:", err);
+        } else {
+          console.log("✅ Comando publicado MQTT:", jsonString);
+        }
+      }
+    );
 
-  // Evitar el doble stop
-  if (legacyPayload.type === "stop" && legacyPayload.action === "stop") {
-    legacyPayload.type = "move";
+    return payload;
+  } catch (err) {
+    console.error("❌ Error serializando payload:", err);
+    return { error: err.message };
   }
-
-  client.publish(
-    "/tenant/1/robot/comandos",
-    JSON.stringify(legacyPayload),
-    { qos: 1 },
-    (err) => {
-      if (err) console.error("❌ Error publicando comando:", err);
-      else console.log(`✅ Comando enviado: ${legacyPayload.type} → ${legacyPayload.action}`);
-    }
-  );
-
-  return legacyPayload;
 };
+
 
 export default client;
