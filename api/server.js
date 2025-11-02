@@ -82,6 +82,8 @@ app.post('/webhook', (req, res) => {
     content: content || {}
   };
 
+  console.log('Payload final:', payload);
+
   // 🔸 Enviamos evento: recibido
   sendEvent({
     tipo: 'recibido',
