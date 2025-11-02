@@ -51,7 +51,8 @@ app.post('/webhook', (req, res) => {
     'turn',
     'connect',
     'disconnect',
-    'battery_status'
+    'battery_status',
+    'sequence'
   ];
   if (!validCommands.includes(commandType)) {
     return res
@@ -75,7 +76,7 @@ app.post('/webhook', (req, res) => {
 
   const payload = {
     nonce: nonce || crypto.randomUUID(),
-    robotId: 1000,
+    robotId: "1000",
     commandType,
     timestamp: timestamp || new Date().toISOString(),
     status: 'ok',
