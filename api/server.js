@@ -31,7 +31,7 @@ function sendEvent(data) {
 // --- 🔹 Webhook receptor ---
 app.post('/webhook', (req, res) => {
   const { nonce, robotId, commandType, timestamp, status, content } = req.body;
-
+  console.log('📥 Webhook recibido:', req.body);
   if (!robotId || !commandType)
     return res
       .status(400)
