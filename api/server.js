@@ -60,27 +60,36 @@ app.post('/webhook', (req, res) => {
       .send({ error: `commandType inválido: ${commandType}` });
   }
 
-  if (['lift', 'tilt', 'move', 'turn'].includes(commandType)) {
-    if (!content?.direction) {
+  //si es start, lo convertimos en move forward
+  let finalCommandType = commandType;
+  let finalContent = content || {};
+
+  if (commandType === 'start') {
+    finalCommandType = 'move';
+    finalContent = { direction: 'forward' };
+  }
+
+  if (['lift', 'tilt', 'move', 'turn'].includes(finalCommandType)) {
+    if (!finalContent?.direction) {
       return res.status(400).send({
-        error: `El comando '${commandType}' requiere el campo 'direction'`
+        error: `El comando '${finalCommandType}' requiere el campo 'direction'`
       });
     }
   }
 
-  if (commandType === 'mode' && !content?.mode) {
+  if (finalCommandType === 'mode' && !finalContent?.mode) {
     return res.status(400).send({
       error: "El comando 'mode' requiere el campo 'mode' en content"
     });
   }
 
-  const payload = {
+const payload = {
     nonce: nonce || crypto.randomUUID(),
-    robotId: "1000",
-    commandType,
+    robotId: robotId || '1000',
+    commandType: finalCommandType,
     timestamp: timestamp || new Date().toISOString(),
     status: 'ok',
-    content: content || {}
+    content: finalContent
   };
 
   console.log('Payload final:', payload);
